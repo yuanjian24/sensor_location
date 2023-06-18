@@ -24,6 +24,22 @@ def get_scanned_links(model, link_scan_binary):
     return len(link_scanned_list), link_scanned_list
 
 
+def get_identified_routes(model, route_idtf_binary):
+    '''get identified routes from the optimized model'''
+    if model.status == GRB.OPTIMAL:
+        print('Routes being identified:', end=' ')
+        route_identified_list = []
+        for route in route_idtf_binary:
+            if route_idtf_binary[route].X > .9:  # this is not a specific integer !!!
+                route_identified_list.append(route)
+                print('%d' % route, end=' ')
+        print('')
+        print('Number of routes being identified:', int(model.objVal))
+    else:
+        print('model do not achieve optimum.')
+    return int(model.objVal), route_identified_list
+
+
 def full_observability(num_route, num_link, route_link_indicator):
     '''
     Minimum number of sensors to achieve full observability.
@@ -69,6 +85,11 @@ def full_observability(num_route, num_link, route_link_indicator):
 def partial_observability(max_num_sensors, num_route, num_link, route_link_indicator):
     '''
     Budget constrained optimal sensor layout formulation
+    :param max_num_sensors: maximum number of sensors
+    :param num_route: number of routes
+    :param num_link: number of links
+    :param route_link_indicator: route-link incidence matrix
+    :return: number of links with sensors, list of links with sensors, number of observable routes, list of observable routes
     '''
 
     # create a new model
@@ -85,12 +106,16 @@ def partial_observability(max_num_sensors, num_route, num_link, route_link_indic
     model.setObjective(route_idtf_binary.sum(), GRB.MAXIMIZE)
 
     # constraints
-    # constraint 1: whether a route is observable
+    # constraint 1: whether a route is observable  
     route_pair_list = [(route_1, route_2) for route_1 in range(num_route) for route_2 in range(route_1 + 1, num_route)]
     model.addConstrs(sum([link_scan_binary[link] for link in range(num_link) if route_link_indicator[route_1, link] != route_link_indicator[route_2, link]]) >= route_idtf_binary[route_1]
                         for route_1, route_2 in route_pair_list)  # at least one link is different
 
-    # constraint 3: sensor budget
+    # constraint 2: at least one sensor is installed on a observable route 
+    model.addConstrs(sum([link_scan_binary[link] for link in range(num_link) if route_link_indicator[route, link] == 1]) >= route_idtf_binary[route]
+                        for route in range(num_route))  # at least one sensor is installed on a observable route
+
+    # constraint 3: sensor budget 
     model.addConstr(link_scan_binary.sum() <= max_num_sensors)
 
     # optimize the model
@@ -103,7 +128,13 @@ def partial_observability(max_num_sensors, num_route, num_link, route_link_indic
     # get the number of links with sensors
     num_link_scanned = len(link_scanned_list)
 
-    return num_link_scanned, link_scanned_list
+    # get the list of observable routes
+    route_idtf_binary_list = [route_idtf_binary[route].X for route in range(num_route)]
+    route_identified_list = [route for route in range(num_route) if route_idtf_binary_list[route] > .9]  # this is not a specific integer !!!
+    # get the number of observable routes
+    num_route_identified = len(route_identified_list)
+
+    return num_link_scanned, link_scanned_list, num_route_identified, route_identified_list
     
 
     

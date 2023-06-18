@@ -31,7 +31,6 @@ def get_indicator(num_route, num_link, df_route, df_link):
             node_list = str2list(df_route.loc[route_idx, 'route_node'])  # 节点列表
         else: 
             node_list = df_route.loc[route_idx, 'route_node']  # 节点列表
-            # node_list = df_route.loc[route_idx, 'route_node'] # 调用
         # print(node_list)
         for node_idx in range(len(node_list) - 1):
             link_idx = df_link[(df_link['u']==node_list[node_idx]) & 
