@@ -23,7 +23,7 @@
 
 代码路径：`observability_model.py`内的`full_observability`函数。
 
-具体案例应用，请参考`sensor_location_optimization_eg1.ipynb`。
+具体案例应用，请参考`sensor_location_model_flow_observability.ipynb`。
 
 ### 算法2：给定检测器数量约束下的可观测路径数量最大化算法
 
@@ -41,4 +41,4 @@
 
 ### 算法2：Path Flow Estimator
 
-（待写）
+具体案例应用，请参考`sensor_location_model_PFE.ipynb`。
